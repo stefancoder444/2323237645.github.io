@@ -1,6 +1,7 @@
 <!--
-Universal Web Music Player + YouTube Search (no API key needed)
-Uses Piped API (https://piped.video) for YouTube search results
+Universal Web Music Player + YouTube Search (via YouTube Data API v3)
+- Requires your own YouTube API key from https://console.cloud.google.com/apis
+- Search for videos, get playable streams (through YouTube iframe player API)
 -->
 
 <!doctype html>
@@ -8,7 +9,7 @@ Uses Piped API (https://piped.video) for YouTube search results
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Music Player + YouTube Search (No API Key)</title>
+  <title>Music Player + YouTube Search</title>
   <style>
     body{margin:0;font-family:Inter,Arial;background:#0b1220;color:#f2f4f8}
     .wrap{max-width:900px;margin:32px auto;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;box-shadow:0 0 24px rgba(0,0,0,0.3)}
@@ -30,7 +31,7 @@ Uses Piped API (https://piped.video) for YouTube search results
 </head>
 <body>
   <div class="wrap">
-    <h1>Universal Web Music Player + YouTube Search (No API Key)</h1>
+    <h1>Universal Web Music Player + YouTube Search</h1>
     <div class="controls">
       <button id="pickBtn">Add Local Files</button>
       <input id="urlInput" type="text" placeholder="Paste direct audio URL (mp3/ogg)" />
@@ -41,7 +42,7 @@ Uses Piped API (https://piped.video) for YouTube search results
     <audio id="audio" controls style="width:100%;margin-top:16px"></audio>
 
     <div class="searchSec">
-      <h2>YouTube Search (via piped.video)</h2>
+      <h2>YouTube Search</h2>
       <input id="ytSearch" type="text" placeholder="Search songs on YouTube" />
       <button id="searchBtn">Search</button>
       <div class="results" id="results"></div>
@@ -53,6 +54,7 @@ Uses Piped API (https://piped.video) for YouTube search results
   </div>
 
   <script>
+    // Local + URL playback
     const audio = document.getElementById('audio');
     const pickBtn = document.getElementById('pickBtn');
     const filePicker = document.getElementById('filePicker');
@@ -111,24 +113,21 @@ Uses Piped API (https://piped.video) for YouTube search results
       urlInput.value='';
     }
 
-    // --- YouTube Search (via piped.video) ---
+    // --- YouTube Search ---
+    const API_KEY='AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0'; // replace with your key
+
     async function searchYouTube(q){
-      try {
-        const res = await fetch(`https://piped.video/api/v1/search?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        renderResults(data);
-      } catch (err) {
-        console.error('Search error:', err);
-        resultsEl.innerHTML='<div>opp, failed to fetch results. try again later.</div>';
-      }
+      const res=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
+      const data=await res.json();
+      renderResults(data.items||[]);
     }
 
     function renderResults(items){
       resultsEl.innerHTML='';
       items.forEach(v=>{
-        const id=v.url.replace('/watch?v=','');
-        const thumb=v.thumbnail;
-        const title=v.title;
+        const id=v.id.videoId;
+        const thumb=v.snippet.thumbnails.medium.url;
+        const title=v.snippet.title;
         const el=document.createElement('div');
         el.className='vid';
         el.innerHTML=`<img src="${thumb}"/><div>${title}</div>`;
