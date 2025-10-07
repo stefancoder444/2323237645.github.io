@@ -1,0 +1,149 @@
+<!--
+Universal Web Music Player + YouTube Search (no API key needed)
+Uses Piped API (https://piped.video) for YouTube search results
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Music Player + YouTube Search (No API Key)</title>
+  <style>
+    body{margin:0;font-family:Inter,Arial;background:#0b1220;color:#f2f4f8}
+    .wrap{max-width:900px;margin:32px auto;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;box-shadow:0 0 24px rgba(0,0,0,0.3)}
+    h1{margin:0 0 8px;font-size:22px}
+    button,input{font-family:inherit}
+    button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer}
+    button:hover{background:#1d4ed8}
+    input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;width:100%}
+    .controls{display:flex;gap:8px;margin-top:16px}
+    .playlist{margin-top:16px}
+    .track{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center}
+    iframe{width:100%;height:400px;margin-top:16px;border:none;border-radius:8px}
+    .searchSec{margin-top:24px}
+    .results{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+    .vid{background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;cursor:pointer}
+    .vid img{width:100%;border-radius:6px}
+    .vid div{margin-top:6px;font-size:13px;color:#cfd6e4}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Universal Web Music Player + YouTube Search (No API Key)</h1>
+    <div class="controls">
+      <button id="pickBtn">Add Local Files</button>
+      <input id="urlInput" type="text" placeholder="Paste direct audio URL (mp3/ogg)" />
+      <button id="addUrl">Add URL</button>
+    </div>
+
+    <div class="playlist" id="playlist"></div>
+    <audio id="audio" controls style="width:100%;margin-top:16px"></audio>
+
+    <div class="searchSec">
+      <h2>YouTube Search (via piped.video)</h2>
+      <input id="ytSearch" type="text" placeholder="Search songs on YouTube" />
+      <button id="searchBtn">Search</button>
+      <div class="results" id="results"></div>
+    </div>
+
+    <iframe id="ytPlayer" allow="autoplay" allowfullscreen></iframe>
+
+    <input id="filePicker" type="file" accept="audio/*" multiple style="display:none" />
+  </div>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const pickBtn = document.getElementById('pickBtn');
+    const filePicker = document.getElementById('filePicker');
+    const urlInput = document.getElementById('urlInput');
+    const addUrl = document.getElementById('addUrl');
+    const playlistEl = document.getElementById('playlist');
+    const ytSearch = document.getElementById('ytSearch');
+    const searchBtn = document.getElementById('searchBtn');
+    const resultsEl = document.getElementById('results');
+    const ytPlayer = document.getElementById('ytPlayer');
+
+    let tracks = [];
+    let currentIndex = -1;
+
+    function addTrack(obj){
+      tracks.push(obj);
+      renderPlaylist();
+      if(currentIndex===-1){currentIndex=0;playCurrent();}
+    }
+
+    function renderPlaylist(){
+      playlistEl.innerHTML='';
+      tracks.forEach((t,i)=>{
+        const div=document.createElement('div');
+        div.className='track';
+        div.innerHTML=`<span>${t.title||t.src.split('/').pop()}</span><div><button onclick="playTrack(${i})">▶️</button></div>`;
+        playlistEl.appendChild(div);
+      });
+    }
+
+    function playTrack(i){
+      currentIndex=i;
+      playCurrent();
+    }
+
+    function playCurrent(){
+      const t=tracks[currentIndex];
+      if(!t) return;
+      audio.src=t.src;
+      audio.play();
+    }
+
+    pickBtn.onclick=()=>filePicker.click();
+    filePicker.onchange=e=>{
+      const files=[...e.target.files];
+      files.forEach(f=>{
+        const url=URL.createObjectURL(f);
+        addTrack({title:f.name,src:url,type:'local'});
+      });
+    }
+
+    addUrl.onclick=()=>{
+      const v=urlInput.value.trim();
+      if(!v) return;
+      addTrack({title:v.split('/').pop(),src:v,type:'url'});
+      urlInput.value='';
+    }
+
+    // --- YouTube Search (via piped.video) ---
+    async function searchYouTube(q){
+      try {
+        const res = await fetch(`https://piped.video/api/v1/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        renderResults(data);
+      } catch (err) {
+        console.error('Search error:', err);
+        resultsEl.innerHTML='<div>Failed to fetch results. Try again later.</div>';
+      }
+    }
+
+    function renderResults(items){
+      resultsEl.innerHTML='';
+      items.forEach(v=>{
+        const id=v.url.replace('/watch?v=','');
+        const thumb=v.thumbnail;
+        const title=v.title;
+        const el=document.createElement('div');
+        el.className='vid';
+        el.innerHTML=`<img src="${thumb}"/><div>${title}</div>`;
+        el.onclick=()=>{
+          ytPlayer.src=`https://www.youtube.com/embed/${id}?autoplay=1`;
+        };
+        resultsEl.appendChild(el);
+      });
+    }
+
+    searchBtn.onclick=()=>{
+      const q=ytSearch.value.trim();
+      if(!q) return;
+      searchYouTube(q);
+    }
+  </script>
+</body>
+</html>
