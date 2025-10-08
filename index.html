@@ -1,190 +1,151 @@
-<!DOCTYPE html>
+<!--
+IF YOU ARE FORKING THIS REPOSITORY, PLEASE DONT USE MY API. USE YOUR OWN YOUTUBE DATA API PLEASE!!!
+
+Web Music Player + YouTube Search (via YouTube Data API v3)
+- Please use your own YouTube API key from https://console.cloud.google.com/apis
+- Search for videos, get playable streams (through YouTube iframe player API)
+-->
+
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Music Search Player 🎵</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clever | Portal</title>
+  <link rel="icon" type="image/png" href="image-logo.png">
   <style>
-    body {
-      background: #202124;
-      color: white;
-      font-family: "Poppins", sans-serif;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-    }
-
-    .search-box {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      width: 90%;
-      max-width: 500px;
-    }
-
-    input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-    }
-
-    button {
-      background: #6c63ff;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #554de0;
-    }
-
-    .results {
-      width: 90%;
-      max-width: 600px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .result-item {
-      display: flex;
-      align-items: center;
-      background: #2c2f3a;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: 0.2s;
-      padding: 8px;
-    }
-
-    .result-item:hover {
-      background: #3a3e4e;
-    }
-
-    .result-item img {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
-      margin-right: 10px;
-    }
-
-    .info {
-      display: flex;
-      flex-direction: column;
-      font-size: 0.9rem;
-    }
-
-    #player {
-      display: none; /* keep video hidden */
-    }
-
-    #nowPlaying {
-      margin-top: 20px;
-      font-size: 1.1rem;
-    }
+    body{margin:0;font-family:Inter,Arial;background:#0b1220;color:#f2f4f8}
+    .wrap{max-width:900px;margin:32px auto;padding:20px;background:rgba(255,255,255,0.02);border-radius:12px;box-shadow:0 0 24px rgba(0,0,0,0.3)}
+    h1{margin:0 0 8px;font-size:22px}
+    button,input{font-family:inherit}
+    button{padding:8px 12px;border:none;border-radius:8px;background:#2563eb;color:white;cursor:pointer}
+    button:hover{background:#1d4ed8}
+    input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;width:100%}
+    .controls{display:flex;gap:8px;margin-top:16px}
+    .playlist{margin-top:16px}
+    .track{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center}
+    iframe{width:100%;height:400px;margin-top:16px;border:none;border-radius:8px}
+    .searchSec{margin-top:24px}
+    .results{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+    .vid{background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;cursor:pointer}
+    .vid img{width:100%;border-radius:6px}
+    .vid div{margin-top:6px;font-size:13px;color:#cfd6e4}
   </style>
 </head>
 <body>
-  <h1>🎶 Music Search Player</h1>
+  <div class="wrap">
+    <h1>Web Music Player (Can also watch some YouTube videos)</h1>
+    <div class="controls">
+      <button id="pickBtn">Add Local Files</button>
+      <input id="urlInput" type="text" placeholder="Paste direct audio URL (mp3/ogg)" />
+      <button id="addUrl">Add URL</button>
+    </div>
 
-  <div class="search-box">
-    <input id="query" type="text" placeholder="Search a song..." />
-    <button id="search">Search</button>
+    <div class="playlist" id="playlist"></div>
+    <audio id="audio" controls style="width:100%;margin-top:16px"></audio>
+
+    <div class="searchSec">
+      <h2>YouTube Search</h2>
+      <input id="ytSearch" type="text" placeholder="Search songs on YouTube" />
+      <button id="searchBtn">Search</button>
+      <div class="results" id="results"></div>
+    </div>
+
+    <iframe id="ytPlayer" allow="autoplay" allowfullscreen></iframe>
+
+    <input id="filePicker" type="file" accept="audio/*" multiple style="display:none" />
   </div>
 
-  <div id="results" class="results"></div>
-
-  <p id="nowPlaying"></p>
-
-  <!-- Hidden YouTube player -->
-  <div id="player"></div>
-
   <script>
-    const API_KEY = "YOUR_API_KEY"; // Replace with your YouTube API key
-    const searchBtn = document.getElementById("search");
-    const queryInput = document.getElementById("query");
-    const resultsDiv = document.getElementById("results");
-    const nowPlaying = document.getElementById("nowPlaying");
-    let player;
+    // Local + URL playback
+    const audio = document.getElementById('audio');
+    const pickBtn = document.getElementById('pickBtn');
+    const filePicker = document.getElementById('filePicker');
+    const urlInput = document.getElementById('urlInput');
+    const addUrl = document.getElementById('addUrl');
+    const playlistEl = document.getElementById('playlist');
+    const ytSearch = document.getElementById('ytSearch');
+    const searchBtn = document.getElementById('searchBtn');
+    const resultsEl = document.getElementById('results');
+    const ytPlayer = document.getElementById('ytPlayer');
 
-    function searchYouTube(query) {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&videoCategoryId=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          showResults(data.items);
-        })
-        .catch(err => console.error(err));
+    let tracks = [];
+    let currentIndex = -1;
+
+    function addTrack(obj){
+      tracks.push(obj);
+      renderPlaylist();
+      if(currentIndex===-1){currentIndex=0;playCurrent();}
     }
 
-    function showResults(items) {
-      resultsDiv.innerHTML = "";
-      items.forEach(item => {
-        const vid = item.id.videoId;
-        const title = item.snippet.title;
-        const thumb = item.snippet.thumbnails.medium.url;
-
-        const div = document.createElement("div");
-        div.className = "result-item";
-        div.innerHTML = `
-          <img src="${thumb}" alt="">
-          <div class="info">
-            <strong>${title}</strong>
-            <span>${item.snippet.channelTitle}</span>
-          </div>
-        `;
-        div.onclick = () => playAudio(vid, title);
-        resultsDiv.appendChild(div);
+    function renderPlaylist(){
+      playlistEl.innerHTML='';
+      tracks.forEach((t,i)=>{
+        const div=document.createElement('div');
+        div.className='track';
+        div.innerHTML=`<span>${t.title||t.src.split('/').pop()}</span><div><button onclick="playTrack(${i})">▶️</button></div>`;
+        playlistEl.appendChild(div);
       });
     }
 
-    function playAudio(videoId, title) {
-      nowPlaying.textContent = "🎧 Now Playing: " + title;
-
-      if (player) {
-        player.loadVideoById(videoId);
-      } else {
-        player = new YT.Player("player", {
-          height: "0",
-          width: "0",
-          videoId: videoId,
-          playerVars: {
-            autoplay: 1,
-          },
-          events: {
-            onReady: event => event.target.playVideo(),
-          },
-        });
-      }
+    function playTrack(i){
+      currentIndex=i;
+      playCurrent();
     }
 
-    searchBtn.onclick = () => {
-      const q = queryInput.value.trim();
-      if (q) searchYouTube(q);
-    };
+    function playCurrent(){
+      const t=tracks[currentIndex];
+      if(!t) return;
+      audio.src=t.src;
+      audio.play();
+    }
 
-    queryInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") searchBtn.click();
-    });
+    pickBtn.onclick=()=>filePicker.click();
+    filePicker.onchange=e=>{
+      const files=[...e.target.files];
+      files.forEach(f=>{
+        const url=URL.createObjectURL(f);
+        addTrack({title:f.name,src:url,type:'local'});
+      });
+    }
 
-    // Load YouTube IFrame API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
+    addUrl.onclick=()=>{
+      const v=urlInput.value.trim();
+      if(!v) return;
+      addTrack({title:v.split('/').pop(),src:v,type:'url'});
+      urlInput.value='';
+    }
+
+    // --- YouTube Search ---
+    const API_KEY='AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0'; // replace with your key
+
+    async function searchYouTube(q){
+      const res=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
+      const data=await res.json();
+      renderResults(data.items||[]);
+    }
+
+    function renderResults(items){
+      resultsEl.innerHTML='';
+      items.forEach(v=>{
+        const id=v.id.videoId;
+        const thumb=v.snippet.thumbnails.medium.url;
+        const title=v.snippet.title;
+        const el=document.createElement('div');
+        el.className='vid';
+        el.innerHTML=`<img src="${thumb}"/><div>${title}</div>`;
+        el.onclick=()=>{
+          ytPlayer.src=`https://www.youtube.com/embed/${id}?autoplay=1`;
+        };
+        resultsEl.appendChild(el);
+      });
+    }
+
+    searchBtn.onclick=()=>{
+      const q=ytSearch.value.trim();
+      if(!q) return;
+      searchYouTube(q);
+    }
   </script>
 </body>
 </html>
