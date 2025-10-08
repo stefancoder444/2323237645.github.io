@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="logo.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clever | Portal</title>
+  <title>Wave — Music Search</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <meta name="description" content="Wave is a sleek online music search and player powered by the YouTube API. Search for any song, stream audio directly, and control playback with a smooth, modern interface. Simple, fast, and stylish — music without the noise.">
   <style>
     * {
       box-sizing: border-box;
@@ -21,6 +22,7 @@
       justify-content: flex-start;
       min-height: 100vh;
       padding-top: 60px;
+      position: relative;
     }
 
     h1 {
@@ -64,26 +66,20 @@
       background: #574ede;
     }
 
-    /* === Player Section === */
-    #player-section {
-      margin-top: 20px;
+    .player {
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 90%;
+      margin-top: 20px;
+      width: 100%;
       max-width: 500px;
-      background: #1c1c2a;
-      border-radius: 15px;
-      padding: 15px 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
 
     #nowPlaying {
-      font-size: 1rem;
-      color: #ddd;
       margin-bottom: 10px;
+      font-size: 1.1rem;
+      color: #ccc;
       text-align: center;
-      display: none;
     }
 
     #pauseBtn {
@@ -95,6 +91,7 @@
       cursor: pointer;
       font-size: 1rem;
       transition: 0.2s;
+      margin-bottom: 10px;
       display: none;
     }
 
@@ -103,36 +100,16 @@
     }
 
     #seekBar {
-      width: 100%;
-      height: 5px;
-      appearance: none;
-      background: #333;
-      border-radius: 10px;
-      outline: none;
-      cursor: pointer;
-      margin-top: 10px;
-      display: none;
-    }
-
-    #seekBar::-webkit-slider-thumb {
-      appearance: none;
-      width: 12px;
-      height: 12px;
-      background: #6c63ff;
-      border-radius: 50%;
+      width: 80%;
+      margin: 10px 0;
     }
 
     #timeDisplay {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
       font-size: 0.9rem;
-      color: #bbb;
-      margin-top: 5px;
-      display: none;
+      color: #aaa;
+      margin-top: 4px;
     }
 
-    /* === Results Section === */
     .results {
       margin-top: 30px;
       display: flex;
@@ -180,11 +157,6 @@
       font-size: 0.9rem;
     }
 
-    #player {
-      display: none;
-    }
-
-    /* Disclaimer bottom-right */
     .disclaimer {
       position: fixed;
       bottom: 10px;
@@ -192,173 +164,148 @@
       font-size: 0.75rem;
       color: #888;
       opacity: 0.8;
-      text-align: right;
     }
+
+    .credits {
+      position: fixed;
+      bottom: 10px;
+      left: 15px;
+      font-size: 0.75rem;
+      color: #888;
+      opacity: 0.8;
+    }
+
   </style>
 </head>
 <body>
-  <h1>Music Player DSD256 — Music Search</h1>
+  <h1>Wave Music</h1>
 
   <div class="search-box">
-    <input id="query" type="text" placeholder="Search for a song..." />
-    <button id="search">Search</button>
+    <input type="text" id="searchInput" placeholder="Search for songs..." />
+    <button onclick="searchSongs()">Search</button>
   </div>
 
-  <div id="player-section">
-    <div id="nowPlaying"></div>
-    <button id="pauseBtn">⏸ Pause</button>
-    <input type="range" id="seekBar" value="0" min="0" max="100" />
-    <div id="timeDisplay">
-      <span id="currentTime">0:00</span>
-      <span id="totalTime">0:00</span>
-    </div>
+  <div class="player">
+    <div id="nowPlaying">Not playing</div>
+    <button id="pauseBtn" onclick="togglePlay()">Pause</button>
+    <input type="range" id="seekBar" value="0" min="0" max="100" step="1">
+    <div id="timeDisplay">0:00 / 0:00</div>
   </div>
 
-  <div id="results" class="results"></div>
+  <div class="results" id="results"></div>
 
-  <div id="player"></div>
-
-  <div class="disclaimer">
-    © 2025 Music Player DSD256 — Music Search — audio streamed by YouTube API
-  </div>
+  <div class="credits">© 2025 Wave Music | Created by BigWhiteThing</div>
+  <div class="disclaimer">Audio playback powered by YouTube API</div>
 
   <script>
-    const API_KEY = "AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0"; // Replace with your YouTube API key
-    const searchBtn = document.getElementById("search");
-    const queryInput = document.getElementById("query");
-    const resultsDiv = document.getElementById("results");
-    const nowPlaying = document.getElementById("nowPlaying");
-    const pauseBtn = document.getElementById("pauseBtn");
-    const seekBar = document.getElementById("seekBar");
-    const currentTimeEl = document.getElementById("currentTime");
-    const totalTimeEl = document.getElementById("totalTime");
-    const timeDisplay = document.getElementById("timeDisplay");
+    const API_KEY = "AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0"; // Replace with your restricted key
+    let player, currentVideoId = null, isPlaying = false, duration = 0, seekUpdater;
 
-    let player;
-    let isPaused = false;
-    let updateInterval;
+    function searchSongs() {
+      const query = document.getElementById("searchInput").value;
+      if (!query) return;
 
-    function searchYouTube(query) {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&videoCategoryId=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => showResults(data.items))
-        .catch((err) => console.error(err));
+      fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=8`)
+        .then(res => res.json())
+        .then(data => {
+          const resultsDiv = document.getElementById("results");
+          resultsDiv.innerHTML = "";
+          data.items.forEach(item => {
+            const videoId = item.id.videoId;
+            const title = item.snippet.title;
+            const channel = item.snippet.channelTitle;
+            const thumbnail = item.snippet.thumbnails.medium.url;
+
+            const div = document.createElement("div");
+            div.className = "result-item";
+            div.innerHTML = `
+              <img src="${thumbnail}">
+              <div class="info">
+                <strong>${title}</strong>
+                <span>${channel}</span>
+              </div>
+            `;
+            div.onclick = () => playSong(videoId, title, channel);
+            resultsDiv.appendChild(div);
+          });
+        });
     }
 
-    function showResults(items) {
-      resultsDiv.innerHTML = "";
-      items.forEach((item) => {
-        const vid = item.id.videoId;
-        const title = item.snippet.title;
-        const channel = item.snippet.channelTitle;
-        const thumb = item.snippet.thumbnails.medium.url;
+    function playSong(videoId, title, channel) {
+      if (!player) {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+        window.onYouTubeIframeAPIReady = () => initPlayer(videoId, title, channel);
+      } else {
+        player.loadVideoById(videoId);
+        updateNowPlaying(title, channel);
+      }
+      currentVideoId = videoId;
+    }
 
-        const div = document.createElement("div");
-        div.className = "result-item";
-        div.innerHTML = `
-          <img src="${thumb}" alt="">
-          <div class="info">
-            <strong>${title}</strong>
-            <span>${channel}</span>
-          </div>
-        `;
-        div.onclick = () => playAudio(vid, title, channel);
-        resultsDiv.appendChild(div);
+    function initPlayer(videoId, title, channel) {
+      player = new YT.Player(document.createElement("div"), {
+        height: "0",
+        width: "0",
+        videoId: videoId,
+        playerVars: { controls: 0 },
+        events: {
+          onReady: e => {
+            e.target.playVideo();
+            isPlaying = true;
+            updateNowPlaying(title, channel);
+            duration = player.getDuration();
+            startSeekUpdater();
+          }
+        }
       });
     }
 
-    function playAudio(videoId, title, channel) {
-      nowPlaying.style.display = "block";
-      pauseBtn.style.display = "inline-block";
-      seekBar.style.display = "block";
-      timeDisplay.style.display = "flex";
-      nowPlaying.textContent = `🎧 Now Playing: ${title} — ${channel}`;
+    function updateNowPlaying(title, channel) {
+      document.getElementById("nowPlaying").innerText = `${title} — ${channel}`;
+      document.getElementById("pauseBtn").style.display = "inline-block";
+    }
 
-      if (player) {
-        player.loadVideoById(videoId);
+    function togglePlay() {
+      if (!player) return;
+      if (isPlaying) {
+        player.pauseVideo();
+        document.getElementById("pauseBtn").innerText = "Play";
       } else {
-        player = new YT.Player("player", {
-          height: "0",
-          width: "0",
-          videoId: videoId,
-          playerVars: {
-            autoplay: 1,
-          },
-          events: {
-            onReady: (event) => {
-              event.target.playVideo();
-              startUpdatingSeekBar();
-            },
-            onStateChange: handleStateChange,
-          },
-        });
+        player.playVideo();
+        document.getElementById("pauseBtn").innerText = "Pause";
       }
-      startUpdatingSeekBar();
+      isPlaying = !isPlaying;
     }
 
-    function handleStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) startUpdatingSeekBar();
-      else if (event.data === YT.PlayerState.PAUSED) clearInterval(updateInterval);
-      else if (event.data === YT.PlayerState.ENDED) clearInterval(updateInterval);
-    }
-
-    function startUpdatingSeekBar() {
-      clearInterval(updateInterval);
-      updateInterval = setInterval(() => {
+    function startSeekUpdater() {
+      clearInterval(seekUpdater);
+      seekUpdater = setInterval(() => {
         if (player && player.getDuration) {
           const current = player.getCurrentTime();
-          const duration = player.getDuration();
-          const progress = (current / duration) * 100;
-          seekBar.value = progress;
-
-          currentTimeEl.textContent = formatTime(current);
-          totalTimeEl.textContent = formatTime(duration);
+          const total = player.getDuration();
+          const percent = (current / total) * 100;
+          document.getElementById("seekBar").value = percent;
+          document.getElementById("timeDisplay").innerText = 
+            `${formatTime(current)} / ${formatTime(total)}`;
         }
       }, 500);
     }
 
-    seekBar.addEventListener("input", () => {
-      if (player && player.getDuration) {
-        const seekTo = (seekBar.value / 100) * player.getDuration();
-        player.seekTo(seekTo, true);
+    document.getElementById("seekBar").addEventListener("input", e => {
+      if (player && player.seekTo) {
+        const total = player.getDuration();
+        const newTime = (e.target.value / 100) * total;
+        player.seekTo(newTime);
       }
     });
 
     function formatTime(sec) {
-      const minutes = Math.floor(sec / 60);
-      const seconds = Math.floor(sec % 60)
-        .toString()
-        .padStart(2, "0");
-      return `${minutes}:${seconds}`;
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60).toString().padStart(2, "0");
+      return `${m}:${s}`;
     }
-
-    pauseBtn.onclick = () => {
-      if (!player) return;
-      if (isPaused) {
-        player.playVideo();
-        pauseBtn.textContent = "⏸ Pause";
-        isPaused = false;
-      } else {
-        player.pauseVideo();
-        pauseBtn.textContent = "▶️ Resume";
-        isPaused = true;
-      }
-    };
-
-    searchBtn.onclick = () => {
-      const q = queryInput.value.trim();
-      if (q) searchYouTube(q);
-    };
-
-    queryInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") searchBtn.click();
-    });
-
-    // Load YouTube API script
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
   </script>
 </body>
 </html>
