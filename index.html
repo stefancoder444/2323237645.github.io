@@ -23,18 +23,17 @@ Universal Web Music Player + YouTube Search (via YouTube Data API v3)
     .controls{display:flex;gap:8px;margin-top:16px}
     .playlist{margin-top:16px}
     .track{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center}
-    audio{width:100%;margin-top:16px;border-radius:8px}
+    iframe{width:100%;height:400px;margin-top:16px;border:none;border-radius:8px}
     .searchSec{margin-top:24px}
     .results{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-    .vid{background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;cursor:pointer;transition:transform .15s}
-    .vid:hover{transform:scale(1.03)}
+    .vid{background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;cursor:pointer}
     .vid img{width:100%;border-radius:6px}
     .vid div{margin-top:6px;font-size:13px;color:#cfd6e4}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Web Music Player (With YouTube Search)</h1>
+    <h1>Web Music Player (Can also watch some YouTube videos)</h1>
     <div class="controls">
       <button id="pickBtn">Add Local Files</button>
       <input id="urlInput" type="text" placeholder="Paste direct audio URL (mp3/ogg)" />
@@ -42,7 +41,7 @@ Universal Web Music Player + YouTube Search (via YouTube Data API v3)
     </div>
 
     <div class="playlist" id="playlist"></div>
-    <audio id="audio" controls></audio>
+    <audio id="audio" controls style="width:100%;margin-top:16px"></audio>
 
     <div class="searchSec">
       <h2>YouTube Search</h2>
@@ -51,10 +50,13 @@ Universal Web Music Player + YouTube Search (via YouTube Data API v3)
       <div class="results" id="results"></div>
     </div>
 
+    <iframe id="ytPlayer" allow="autoplay" allowfullscreen></iframe>
+
     <input id="filePicker" type="file" accept="audio/*" multiple style="display:none" />
   </div>
 
   <script>
+    // Local + URL playback
     const audio = document.getElementById('audio');
     const pickBtn = document.getElementById('pickBtn');
     const filePicker = document.getElementById('filePicker');
@@ -64,6 +66,7 @@ Universal Web Music Player + YouTube Search (via YouTube Data API v3)
     const ytSearch = document.getElementById('ytSearch');
     const searchBtn = document.getElementById('searchBtn');
     const resultsEl = document.getElementById('results');
+    const ytPlayer = document.getElementById('ytPlayer');
 
     let tracks = [];
     let currentIndex = -1;
@@ -112,7 +115,7 @@ Universal Web Music Player + YouTube Search (via YouTube Data API v3)
       urlInput.value='';
     }
 
-    // --- YouTube Search (No video display) ---
+    // --- YouTube Search ---
     const API_KEY='AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0'; // replace with your key
 
     async function searchYouTube(q){
@@ -130,8 +133,9 @@ Universal Web Music Player + YouTube Search (via YouTube Data API v3)
         const el=document.createElement('div');
         el.className='vid';
         el.innerHTML=`<img src="${thumb}"/><div>${title}</div>`;
-        // No embedded player — just clickable search results
-        el.onclick=()=>window.open(`https://www.youtube.com/watch?v=${id}`, '_blank');
+        el.onclick=()=>{
+          ytPlayer.src=`https://www.youtube.com/embed/${id}?autoplay=1`;
+        };
         resultsEl.appendChild(el);
       });
     }
