@@ -2,4 +2,4 @@
 
 What I made is a sleek online music search and player powered by the YouTube API. Search for any song, stream audio directly, and control playback with a smooth, modern interface. Simple, fast, and stylish — music without the noise. 
 
-This project is open source © Music Player DSD256 2024 All Rights Rserverd
+This project is open source © Music Player DSD256 2024 All Rights Reserverd
