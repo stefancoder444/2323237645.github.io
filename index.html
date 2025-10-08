@@ -123,4 +123,5 @@ Web Music Player + YouTube Search (via YouTube Data API v3)
       const res=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
       const data=await res.json();
       renderResults(data.items||[]);
-  
+    }
+
