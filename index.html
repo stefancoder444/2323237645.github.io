@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Web Music Player DSD256 — Music Search</title>
+  <title>Web Music Player DSD256 — Music Search — Music Search</title>
   <style>
     * {
       box-sizing: border-box;
@@ -63,6 +63,44 @@
       background: #574ede;
     }
 
+    #controls-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 15px;
+      gap: 6px;
+      width: 80%;
+      max-width: 400px;
+    }
+
+    #seekBar {
+      width: 100%;
+      height: 5px;
+      appearance: none;
+      background: #333;
+      border-radius: 10px;
+      outline: none;
+      cursor: pointer;
+      display: none;
+    }
+
+    #seekBar::-webkit-slider-thumb {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      background: #6c63ff;
+      border-radius: 50%;
+    }
+
+    #timeDisplay {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 0.9rem;
+      color: #bbb;
+      display: none;
+    }
+
     .results {
       margin-top: 30px;
       display: flex;
@@ -117,23 +155,6 @@
       text-align: center;
     }
 
-    #controls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 10px;
-      gap: 10px;
-    }
-
-    #timeDisplay {
-      display: flex;
-      justify-content: space-between;
-      width: 80%;
-      max-width: 400px;
-      font-size: 0.9rem;
-      color: #bbb;
-    }
-
     #pauseBtn {
       background: #6c63ff;
       border: none;
@@ -144,62 +165,58 @@
       font-size: 1rem;
       transition: 0.2s;
       display: none;
+      margin-top: 10px;
     }
 
     #pauseBtn:hover {
       background: #574ede;
     }
 
-    #seekBar {
-      width: 80%;
-      max-width: 400px;
-      height: 5px;
-      appearance: none;
-      background: #333;
-      border-radius: 10px;
-      outline: none;
-      cursor: pointer;
-      display: none;
-    }
-
-    #seekBar::-webkit-slider-thumb {
-      appearance: none;
-      width: 12px;
-      height: 12px;
-      background: #6c63ff;
-      border-radius: 50%;
-    }
-
     #player {
       display: none;
+    }
+
+    /* Disclaimer in bottom-right corner */
+    .disclaimer {
+      position: fixed;
+      bottom: 10px;
+      right: 15px;
+      font-size: 0.75rem;
+      color: #888;
+      opacity: 0.8;
+      text-align: right;
     }
   </style>
 </head>
 <body>
-  <h1>Web Music Player DSD256 — Music Search</h1>
+  <h1>🎶 Web Music Player DSD256 — Music Search Music</h1>
 
   <div class="search-box">
     <input id="query" type="text" placeholder="Search for a song..." />
     <button id="search">Search</button>
   </div>
 
-  <div id="results" class="results"></div>
-
-  <div id="nowPlaying"></div>
-
-  <div id="controls">
+  <div id="controls-top">
+    <input type="range" id="seekBar" value="0" min="0" max="100" />
     <div id="timeDisplay">
       <span id="currentTime">0:00</span>
       <span id="totalTime">0:00</span>
     </div>
-    <input type="range" id="seekBar" value="0" min="0" max="100" />
-    <button id="pauseBtn">⏸ Pause</button>
   </div>
+
+  <div id="results" class="results"></div>
+
+  <div id="nowPlaying"></div>
+  <button id="pauseBtn">⏸ Pause</button>
 
   <div id="player"></div>
 
+  <div class="disclaimer">
+    © 2025 Web Music Player DSD256 — Music Search Music — audio streamed via YouTube API
+  </div>
+
   <script>
-    const API_KEY = "AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0"; // Replace with your YouTube API key
+    const API_KEY = "AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0"; // Replace with your API key
     const searchBtn = document.getElementById("search");
     const queryInput = document.getElementById("query");
     const resultsDiv = document.getElementById("results");
@@ -208,6 +225,7 @@
     const seekBar = document.getElementById("seekBar");
     const currentTimeEl = document.getElementById("currentTime");
     const totalTimeEl = document.getElementById("totalTime");
+    const timeDisplay = document.getElementById("timeDisplay");
 
     let player;
     let isPaused = false;
@@ -247,6 +265,7 @@
       nowPlaying.textContent = "🎧 Now Playing: " + title;
       pauseBtn.style.display = "inline-block";
       seekBar.style.display = "block";
+      timeDisplay.style.display = "flex";
 
       if (player) {
         player.loadVideoById(videoId);
