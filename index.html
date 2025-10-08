@@ -125,6 +125,15 @@
       gap: 10px;
     }
 
+    #timeDisplay {
+      display: flex;
+      justify-content: space-between;
+      width: 80%;
+      max-width: 400px;
+      font-size: 0.9rem;
+      color: #bbb;
+    }
+
     #pauseBtn {
       background: #6c63ff;
       border: none;
@@ -167,7 +176,7 @@
   </style>
 </head>
 <body>
-  <h1>🎶 Web Music Player DSD256 — Music Search</h1>
+  <h1>Web Music Player DSD256 — Music Search</h1>
 
   <div class="search-box">
     <input id="query" type="text" placeholder="Search for a song..." />
@@ -179,6 +188,10 @@
   <div id="nowPlaying"></div>
 
   <div id="controls">
+    <div id="timeDisplay">
+      <span id="currentTime">0:00</span>
+      <span id="totalTime">0:00</span>
+    </div>
     <input type="range" id="seekBar" value="0" min="0" max="100" />
     <button id="pauseBtn">⏸ Pause</button>
   </div>
@@ -193,6 +206,8 @@
     const nowPlaying = document.getElementById("nowPlaying");
     const pauseBtn = document.getElementById("pauseBtn");
     const seekBar = document.getElementById("seekBar");
+    const currentTimeEl = document.getElementById("currentTime");
+    const totalTimeEl = document.getElementById("totalTime");
 
     let player;
     let isPaused = false;
@@ -232,7 +247,6 @@
       nowPlaying.textContent = "🎧 Now Playing: " + title;
       pauseBtn.style.display = "inline-block";
       seekBar.style.display = "block";
-      pauseBtn.textContent = "⏸ Pause";
 
       if (player) {
         player.loadVideoById(videoId);
@@ -266,8 +280,13 @@
       clearInterval(updateInterval);
       updateInterval = setInterval(() => {
         if (player && player.getDuration) {
-          const progress = (player.getCurrentTime() / player.getDuration()) * 100;
+          const current = player.getCurrentTime();
+          const duration = player.getDuration();
+          const progress = (current / duration) * 100;
           seekBar.value = progress;
+
+          currentTimeEl.textContent = formatTime(current);
+          totalTimeEl.textContent = formatTime(duration);
         }
       }, 500);
     }
@@ -278,6 +297,14 @@
         player.seekTo(seekTo, true);
       }
     });
+
+    function formatTime(sec) {
+      const minutes = Math.floor(sec / 60);
+      const seconds = Math.floor(sec % 60)
+        .toString()
+        .padStart(2, "0");
+      return `${minutes}:${seconds}`;
+    }
 
     pauseBtn.onclick = () => {
       if (!player) return;
