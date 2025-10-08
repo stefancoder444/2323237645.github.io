@@ -123,29 +123,4 @@ Web Music Player + YouTube Search (via YouTube Data API v3)
       const res=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
       const data=await res.json();
       renderResults(data.items||[]);
-    }
-
-    function renderResults(items){
-      resultsEl.innerHTML='';
-      items.forEach(v=>{
-        const id=v.id.videoId;
-        const thumb=v.snippet.thumbnails.medium.url;
-        const title=v.snippet.title;
-        const el=document.createElement('div');
-        el.className='vid';
-        el.innerHTML=`<img src="${thumb}"/><div>${title}</div>`;
-        el.onclick=()=>{
-          ytPlayer.src=`https://www.youtube.com/embed/${id}?autoplay=1`;
-        };
-        resultsEl.appendChild(el);
-      });
-    }
-
-    searchBtn.onclick=()=>{
-      const q=ytSearch.value.trim();
-      if(!q) return;
-      searchYouTube(q);
-    }
-  </script>
-</body>
-</html>
+  
