@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="logo.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="logo.png">
   <title>Clever | Portal</title>
   <style>
     * {
@@ -219,11 +219,11 @@
   <div id="player"></div>
 
   <div class="disclaimer">
-    © 2025 Music Player DSD256 — Music Search — audio streamed by YouTube API
+    © 2025 Music Player DSD256 — audio streamed via YouTube API
   </div>
 
   <script>
-    const API_KEY = "AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0"; // Replace with your API key
+    const API_KEY = "AIzaSyDkXj66lPy0lC7sRrGfXzFk7dww0c_jkg0"; // Replace with your YouTube API key
     const searchBtn = document.getElementById("search");
     const queryInput = document.getElementById("query");
     const resultsDiv = document.getElementById("results");
@@ -263,16 +263,17 @@
             <span>${channel}</span>
           </div>
         `;
-        div.onclick = () => playAudio(vid, title);
+        div.onclick = () => playAudio(vid, title, channel);
         resultsDiv.appendChild(div);
       });
     }
 
-    function playAudio(videoId, title) {
-      nowPlaying.textContent = "🎧 Now Playing: " + title;
+    function playAudio(videoId, title, channel) {
+      nowPlaying.style.display = "block";
       pauseBtn.style.display = "inline-block";
       seekBar.style.display = "block";
       timeDisplay.style.display = "flex";
+      nowPlaying.textContent = `🎧 Now Playing: ${title} — ${channel}`;
 
       if (player) {
         player.loadVideoById(videoId);
