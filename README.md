@@ -12,15 +12,15 @@ What I made is a sleek online music search and player powered by the YouTube API
 
 ### v2.0.0 (October 8 2025)
 
-- improved ui
-- no need for author name
-- song cover
-- pause, play, and slider to find place in a song
+- Improved ui
+- No need for author name (Less case sensitive)
+- Song cover
+- Pause, play, and slider to find place in a song
 example:
 
 [ Search bar here ]
 [ ⏸ Pause | Song Title — Artist ]
-[ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  1:25 / 3:44 ]
+[ ▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒  1:25 / 3:44 ]
 
 ### v2.1.0 (October 14 2025)
 
