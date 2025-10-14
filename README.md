@@ -4,7 +4,7 @@ What I made is a sleek online music search and player powered by the YouTube API
 
 ## UPDATE LOG
 
-### v1.0.0 (Octtober 7 2025)
+### v1.0.0 (October 7 2025)
 
 - Initial commit of the site
 - Added search bar
