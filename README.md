@@ -32,7 +32,7 @@ example:
 Selfhosting instructions will be available once DSD256 V3 is in a release ready state. Feel free to try setting it up yourself in the meantime but we provide no support or help with this.
 
 ## Credits
-These amazing people have contributed greatly to Blacket over it's development:
+These amazing people have contributed greatly to DSD256 over it's development:
 
 BooketGame - Lead Developer and founder of DSD256
 
