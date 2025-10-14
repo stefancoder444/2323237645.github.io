@@ -34,9 +34,9 @@ Selfhosting instructions will be available once DSD256 V3 is in a release ready 
 ## Credits
 These amazing people have contributed greatly to DSD256 over it's development:
 
-BooketGame - Lead Developer and founder of DSD256
+[BooketGame](https://GitHub.com/booketgame) - Lead Developer and founder of DSD256
 
 ## License
-Distributed under the GPL-3.0 License. See LICENSE for more information.
+Distributed under the AGPL-3.0 License. See LICENSE for more information.
 
 This project is open source © Music Player DSD256 2025 All Rights Reserved
