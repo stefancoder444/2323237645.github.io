@@ -12,7 +12,7 @@ What I made is a sleek online music search and player powered by the YouTube API
 
 ### v2.0.0 (October 8 2025)
 
-- Improved ui
+- Improved UI
 - No need for author name (Less case sensitive)
 - Song cover
 - Pause, play, and slider to find place in a song
@@ -26,5 +26,17 @@ example:
 
 - Minor UI updates
 
+## Selfhost
+⚠️ UNDER CONSTRUCTION ⚠️
+
+Selfhosting instructions will be available once DSD256 V3 is in a release ready state. Feel free to try setting it up yourself in the meantime but we provide no support or help with this.
+
+## Credits
+These amazing people have contributed greatly to Blacket over it's development:
+
+BooketGame - Lead Developer and founder of DSD256
+
+## License
+Distributed under the GPL-3.0 License. See LICENSE for more information.
 
 This project is open source © Music Player DSD256 2025 All Rights Reserved
